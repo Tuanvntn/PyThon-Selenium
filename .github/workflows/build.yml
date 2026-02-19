@@ -1,11 +1,17 @@
-name: Build App
+name: Build App Multi-Platform
 on: [push]
 
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      matrix:
+        # Robot sẽ tạo ra 2 máy ảo song song
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -16,12 +22,19 @@ jobs:
         run: |
           pip install selenium webdriver-manager pandas openpyxl pyinstaller
 
-      - name: Build with PyInstaller
+      - name: Build with PyInstaller (Windows)
+        if: matrix.os == 'windows-latest'
         run: |
-          pyinstaller --noconsole --onefile --name "CaoDuLieu" main.py
+          pyinstaller --noconsole --onefile --name "CaoDuLieu_Win" main.py
+
+      - name: Build with PyInstaller (Mac)
+        if: matrix.os == 'macos-latest'
+        run: |
+          pyinstaller --noconsole --onefile --name "CaoDuLieu_Mac" main.py
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: App-Windows
+          # Tên file tải về sẽ phân biệt theo hệ điều hành
+          name: App-${{ matrix.os }}
           path: dist/
